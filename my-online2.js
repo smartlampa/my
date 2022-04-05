@@ -854,7 +854,7 @@
     function kinobase(component, _object) {
       var network = new Lampa.Reguest();
       var extract = {};
-      var embed = 'http://kinobase.org/';
+      var embed = 'http://arkmv.ru/kinobase/';
       var object = _object;
       var select_title = '';
       var select_id = '';
