@@ -1192,7 +1192,7 @@
         select_id = kinopoisk_id;
         select_title = object.movie.title;
         var url = embed + 'kp/' + kinopoisk_id;
-        network.silent(url, function (str) {
+        network["native"](url, function (str) {
           if (str) {
             parse(str);
           } else component.empty("Не нашли " + select_title);
