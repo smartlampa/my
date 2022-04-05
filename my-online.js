@@ -1545,9 +1545,6 @@
             }, function (a, c) {
               _this2.empty(network.errorDecode(a, c));
             }, false, {
-              headers: {
-                'X-API-KEY': '2d55adfd-019d-4567-bbf7-67d503f61b5a'
-              }
             });
           } else {
             _this2.empty(network.errorDecode(a, c));
