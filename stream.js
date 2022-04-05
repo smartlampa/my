@@ -409,7 +409,7 @@
     function rezka(component, _object) {
       var network = new Lampa.Reguest();
       var extract = {};
-      var embed = 'http://arkmv.ru/rezka/';
+      var embed = 'http://i.arkmv.ru/rezka/';
       var object = _object;
       var select_title = '';
       var select_id = '';
@@ -481,7 +481,7 @@
         var url = embed + 'serial/' + voice + '/iframe?h=gidonline.io';
         network.clear();
         network.timeout(10000);
-        network.silent(url, function (str) {
+        network["native"](url, function (str) {
           extractData(str);
           call();
         }, function () {
@@ -494,7 +494,7 @@
       function getFirstTranlate(id, call) {
         network.clear();
         network.timeout(10000);
-        network.silent(embed + 'embed/' + id + '?s=1', function (str) {
+        network["native"](embed + 'embed/' + id + '?s=1', function (str) {
           extractData(str);
           if (extract.voice.length) call(extract.voice[0].token);else component.empty();
         }, function () {
@@ -507,7 +507,7 @@
       function getEmbed(url) {
         network.clear();
         network.timeout(10000);
-        network.silent(url, function (str) {
+        network["native"](url, function (str) {
           component.loading(false);
           extractData(str);
           filter();
@@ -607,7 +607,7 @@
 
         network.clear();
         network.timeout(3000);
-        network.silent(url, function (str) {
+        network["native"](url, function (str) {
           var videos = str.match("file': '(.*?)'");
 
           if (videos) {
