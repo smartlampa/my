@@ -135,7 +135,7 @@
         extract = {};
 
         if (movie) {
-          var src = movie.iframe_src;
+          var src = movie.iframe_src.replace(/[0-9]{1,4}.svetacdn.in/, 'tor.arkmv.ru/vcdn/');
           network["native"]('http:' + src, function (raw) {
             var math = raw.replace(/\n/g, '').match(/id="files" value="(.*?)"/);
 
