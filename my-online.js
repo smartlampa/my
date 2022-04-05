@@ -1,9 +1,5 @@
-//29.03.2022 - fix kinobbase episodes
-
 (function () {
     'use strict';
-    
-////////////////////// Плагин VIDEOCDN //////////////////
 
     function videocdn(component, _object) {
       var network = new Lampa.Reguest();
@@ -20,7 +16,7 @@
        * @param {Object} _object 
        */
 
-      this.search = function (_object, data) {
+ this.search = function (_object, data) {
         object = _object;
         var url = 'http://tor.arkmv.ru/vcdn/api/';
         var itm = data[0];
@@ -30,7 +26,7 @@
         url = Lampa.Utils.addUrlComponent(url, 'api_token=W2NvL86a34Kg2oJXMTf8q67gsgkKuzap');
         url = Lampa.Utils.addUrlComponent(url, itm.imdb_id ? 'imdb_id=' + encodeURIComponent(itm.imdb_id) : 'title=' + encodeURIComponent(itm.title));
         url = Lampa.Utils.addUrlComponent(url, 'field=' + encodeURIComponent('global'));
-        network["native"](url, function (found) {
+        network.silent(url, function (found) {
           results = found.data.filter(function (elem) {
             return elem.id == itm.id;
           });
@@ -136,7 +132,7 @@
 
         if (movie) {
           var src = movie.iframe_src.replace(/[0-9]{1,4}.svetacdn.in/, 'tor.arkmv.ru/vcdn/');
-          network["native"]('http:' + src, function (raw) {
+          network.silent('http:' + src, function (raw) {
             var math = raw.replace(/\n/g, '').match(/id="files" value="(.*?)"/);
 
             if (math) {
@@ -297,7 +293,7 @@
 
       function filtred() {
         var filtred = [];
-        var filter_data = Lampa.Storage.get('online_filter', '{}');
+        var filter_data = Lampa.Storage.get('streamv1_filter', '{}');
 
         if (object.movie.number_of_seasons) {
           results.slice(0, 1).forEach(function (movie) {
@@ -345,7 +341,7 @@
           element.info = element.season ? ' / ' + filter_items.voice[choice.voice] : '';
           var hash = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title].join('') : object.movie.original_title);
           var view = Lampa.Timeline.view(hash);
-          var item = Lampa.Template.get('online', element);
+          var item = Lampa.Template.get('streamv1', element);
           var hash_file = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title, filter_items.voice[choice.voice]].join('') : object.movie.original_title + element.title);
           item.addClass('video--stream');
           element.timeline = view;
@@ -368,6 +364,7 @@
                 timeline: view,
                 title: element.season ? element.title : object.movie.title + ' / ' + element.title
               };
+									   
 
               if (element.season) {
                 items.forEach(function (elem) {
@@ -405,8 +402,6 @@
         component.start(true);
       }
     }
-
-///////////////////// Плагин REZKA  ///////////////////
 
     function rezka(component, _object) {
       var network = new Lampa.Reguest();
@@ -483,7 +478,7 @@
         var url = embed + 'serial/' + voice + '/iframe?h=gidonline.io';
         network.clear();
         network.timeout(10000);
-        network["native"](url, function (str) {
+        network.silent(url, function (str) {
           extractData(str);
           call();
         }, function () {
@@ -496,9 +491,9 @@
       function getFirstTranlate(id, call) {
         network.clear();
         network.timeout(10000);
-        network["native"](embed + 'embed/' + id + '?s=1', function (str) {
+        network.silent(embed + 'embed/' + id, function (str) {
           extractData(str);
-          if (extract.voice.length) call(extract.voice[0].token);else component.empty();
+          if (extract.voice.length) call(extract.voice[choice.voice].token);else component.empty();
         }, function () {
           component.empty();
         }, false, {
@@ -509,7 +504,7 @@
       function getEmbed(url) {
         network.clear();
         network.timeout(10000);
-        network["native"](url, function (str) {
+        network.silent(url, function (str) {
           component.loading(false);
           extractData(str);
           filter();
@@ -609,7 +604,7 @@
 
         network.clear();
         network.timeout(3000);
-        network["native"](url, function (str) {
+        network.silent(url, function (str) {
           var videos = str.match("file': '(.*?)'");
 
           if (videos) {
@@ -626,11 +621,11 @@
               var link = video.match(new RegExp(n + "](.*?)mp4"));
 
               if (link) {
-                if (!first) first = link[1] + 'mp4';
-                element.qualitys[n] = link[1] + 'mp4';
+                if (!first) first = link[1].replace(/https/, 'http') + 'mp4:hls:manifest.m3u8';
+                element.qualitys[n] = link[1].replace(/https/, 'http') + 'mp4:hls:manifest.m3u8';
 
                 if (n.indexOf('1080') >= 0) {
-                  p1080 = link[1] + 'mp4';
+                  p1080 = link[1].replace(/https/, 'http') + 'mp4:hls:manifest.m3u8';
                   first = p1080;
                 }
               }
@@ -783,19 +778,19 @@
         if (extract.season.length) {
           extract.episode.forEach(function (episode) {
             items.push({
-              title: 'S' + extract.season[Math.min(extract.season.length - 1, choice.season)].id + ' / ' + episode.name,
-              quality: '720p ~ 1080p',
+              title: object.movie.title + ' - ' + 'S' + extract.season[Math.min(extract.season.length - 1, choice.season)].id + ' / ' + episode.name,
+              quality: '',
               season: extract.season[Math.min(extract.season.length - 1, choice.season)].id,
               episode: parseInt(episode.id),
-              info: ' / ' + extract.voice[choice.voice].name,
+              info:  extract.voice[choice.voice].name,
               voice: extract.voice[choice.voice]
             });
           });
         } else {
           extract.voice.forEach(function (voice) {
             items.push({
-              title: voice.name.length > 3 ? voice.name : select_title,
-              quality: '720p ~ 1080p',
+              quality: voice.name.length > 3 ? voice.name : select_title,
+              title: object.movie.title,
               voice: voice,
               info: ''
             });
@@ -805,7 +800,7 @@
         items.forEach(function (element) {
           var hash = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title].join('') : object.movie.original_title);
           var view = Lampa.Timeline.view(hash);
-          var item = Lampa.Template.get('online', element);
+          var item = Lampa.Template.get('streamv1', element);
           var hash_file = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title, element.voice.name].join('') : object.movie.original_title + element.voice.name);
           element.timeline = view;
           item.append(Lampa.Timeline.render(view));
@@ -849,12 +844,10 @@
       }
     }
 
-////////////////////// Плагин KINOBASE ////////////////////
-
     function kinobase(component, _object) {
       var network = new Lampa.Reguest();
       var extract = {};
-      var embed = 'https://kinobase.org/';
+      var embed = 'http://arkmv.ru/kinobase/';
       var object = _object;
       var select_title = '';
       var select_id = '';
@@ -874,7 +867,7 @@
         object = _object;
         select_title = object.movie.title;
         var url = embed + "search?query=" + encodeURIComponent(cleanTitle(select_title));
-        network["native"](url, function (str) {
+        network.silent(url, function (str) {
           str = str.replace(/\n/, '');
           var links = object.movie.number_of_seasons ? str.match(/<a href="\/serial\/(.*?)">(.*?)<\/a>/g) : str.match(/<a href="\/film\/(.*?)" class="link"[^>]+>(.*?)<\/a>/g);
           var relise = object.search_date || (object.movie.number_of_seasons ? object.movie.first_air_date : object.movie.release_date);
@@ -1045,7 +1038,7 @@
       function getPage(url) {
         network.clear();
         network.timeout(1000 * 10);
-        network["native"](embed + url, function (str) {
+        network.silent(embed + url, function (str) {
           str = str.replace(/\n/g, '');
           var MOVIE_ID = str.match('var MOVIE_ID = ([^;]+);');
           var VOD_HASH = str.match('var VOD_HASH = "([^"]+)"');
@@ -1060,7 +1053,7 @@
             file_url = Lampa.Utils.addUrlComponent(file_url, "e=" + vod_time);
             network.clear();
             network.timeout(1000 * 10);
-            network["native"](embed + file_url, function (files) {
+            network.silent(embed + file_url, function (files) {
               component.loading(false);
               extractData(files, str);
               filter();
@@ -1103,12 +1096,12 @@
         component.reset();
         var viewed = Lampa.Storage.cache('online_view', 5000, []);
         items.forEach(function (element, index) {
-          if (element.season) element.title = 'S' + element.season + ' / ' + element.title;
+          if (element.season) element.title = object.movie.title + ' - ' +  'S' + element.season + ' / ' + element.title;
           if (element.voice) element.title = element.voice;
           if (typeof element.episode == 'undefined') element.episode = index + 1;
           var hash = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title].join('') : object.movie.original_title);
           var view = Lampa.Timeline.view(hash);
-          var item = Lampa.Template.get('online', element);
+          var item = Lampa.Template.get('streamv1', element);
           var hash_file = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title, element.title, 'kinobase'].join('') : object.movie.original_title + element.quality + 'kinobase');
           element.timeline = view;
           item.append(Lampa.Timeline.render(view));
@@ -1131,6 +1124,7 @@
                 subtitles: element.subtitles,
                 quality: element.qualitys
               };
+									   
 
               if (element.season) {
                 items.forEach(function (elem) {
@@ -1169,7 +1163,7 @@
         component.start(true);
       }
     }
-//////////////////////////// Плагин COLLAPS ////////////////////////
+
     function collaps(component, _object) {
       var network = new Lampa.Reguest();
       var extract = {};
@@ -1192,7 +1186,7 @@
         select_id = kinopoisk_id;
         select_title = object.movie.title;
         var url = embed + 'kp/' + kinopoisk_id;
-        network["native"](url, function (str) {
+        network.silent(url, function (str) {
           if (str) {
             parse(str);
           } else component.empty("Не нашли " + select_title);
@@ -1296,7 +1290,7 @@
 
       function filtred() {
         var filtred = [];
-        var filter_data = Lampa.Storage.get('online_filter', '{}');
+        var filter_data = Lampa.Storage.get('streamv1_filter', '{}');
 
         if (extract.playlist) {
           extract.playlist.seasons.forEach(function (season, i) {
@@ -1321,11 +1315,11 @@
           });
         } else if (extract.source) {
           var resolution = Lampa.Arrays.getKeys(extract.qualityByWidth).pop();
-          var max_quality = extract.qualityByWidth ? extract.qualityByWidth[resolution] || 0 : 0;
+         // var max_quality = extract.qualityByWidth[resolution] || 0;
           filtred.push({
             file: extract.source.hls,
             title: extract.title,
-            quality: max_quality ? max_quality + 'p / ' : '',
+            quality: 'HLS / ',
             info: extract.source.audio.names.slice(0, 5).join(', '),
             subtitles: extract.source.cc ? extract.source.cc.map(function (c) {
               return {
@@ -1349,7 +1343,7 @@
         items.forEach(function (element) {
           var hash = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title].join('') : object.movie.original_title);
           var view = Lampa.Timeline.view(hash);
-          var item = Lampa.Template.get('online', element);
+          var item = Lampa.Template.get('streamv1', element);
           var hash_file = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title, element.title].join('') : object.movie.original_title + 'collaps');
           element.timeline = view;
           item.append(Lampa.Timeline.render(view));
@@ -1370,6 +1364,7 @@
                 title: element.season ? element.title : element.voice ? object.movie.title + ' / ' + element.title : element.title,
                 subtitles: element.subtitles
               };
+									   
 
               if (element.season) {
                 items.forEach(function (elem) {
@@ -1415,7 +1410,7 @@
       });
       var files = new Lampa.Files(object);
       var filter = new Lampa.Filter(object);
-      var balanser = Lampa.Storage.get('online_balanser', 'videocdn');
+      var balanser = Lampa.Storage.get('streamv1_balanser', 'videocdn');
       var sources = {
         videocdn: new videocdn(this, object),
         rezka: new rezka(this, object),
@@ -1435,7 +1430,7 @@
 
       if (filter_sources.indexOf(balanser) == -1) {
         balanser = 'videocdn';
-        Lampa.Storage.set('online_balanser', 'videocdn');
+        Lampa.Storage.set('streamv1_balanser', 'videocdn');
       }
 
       scroll.minus();
@@ -1472,7 +1467,7 @@
             } else {
               if (a.stype == 'source') {
                 balanser = filter_sources[b.index];
-                Lampa.Storage.set('online_balanser', balanser);
+                Lampa.Storage.set('streamv1_balanser', balanser);
 
                 _this.search();
 
@@ -1509,7 +1504,13 @@
 
       this.find = function () {
         var _this2 = this;
-
+        var year = object.movie.number_of_seasons ? object.movie.first_air_date : object.movie.release_date
+               if (year == "") {
+                        var year = "";
+                } else {
+            var year = year.match("(.*?)-");
+            var year = year[1];
+                };
         var url = 'http://tor.arkmv.ru/vcdn/api/short';
         var query = object.search;
         url = Lampa.Utils.addUrlComponent(url, 'api_token=W2NvL86a34Kg2oJXMTf8q67gsgkKuzap');
@@ -1532,42 +1533,65 @@
 
               _this2.loading(false);
             }
-          } else _this2.empty('По запросу (' + query + ') нет результатов');
-        };
-
-        var pillow = function pillow(a, c) {
-          network.timeout(1000 * 15);
-
-          if (balanser !== 'videocdn') {
-            network["native"]('http://arkmv.ru/kp/' + encodeURIComponent(query), function (json) {
+          } else 
+           if (balanser !== 'videocdn') {
+            network.silent('http://arkmv.ru/kp/' + encodeURIComponent(query), function (json) {
               json.data = json.films;
+                  if (json.data.length == '0') {
+                        _this2.empty('По запросу (' + query + ') нет результатов');
+                  return;
+                  }
               display(json);
             }, function (a, c) {
               _this2.empty(network.errorDecode(a, c));
             }, false, {
             });
           } else {
+            _this2.empty('По запросу (' + query + ') нет результатов');
+          }
+        };
+
+        var pillow = function pillow(a, c) {
+          network.timeout(1000 * 5);
+
+          if (balanser !== 'videocdn') {
+            network.silent('http://arkmv.ru/kp/' + encodeURIComponent(query) + ' ' + year, function (json) {
+              json.data = json.films;
+              display(json);
+            }, function (a, c) {
+              _this2.empty(network.errorDecode(a, c));
+            }, false, {
+						
+																   
+			   
+            });
+          } else {
             _this2.empty(network.errorDecode(a, c));
           }
         };
 
+						
+								   
+																																																			  
+							
+
         var letgo = function letgo(imdb_id) {
           var url_end = Lampa.Utils.addUrlComponent(url, imdb_id ? 'imdb_id=' + encodeURIComponent(imdb_id) : 'title=' + encodeURIComponent(query));
-          network.timeout(1000 * 15);
-          network["native"](url_end, function (json) {
+          network.timeout(1000 * 5);
+          network.silent(url_end, function (json) {
             if (json.data && json.data.length) display(json);else {
-              network["native"](Lampa.Utils.addUrlComponent(url, 'title=' + encodeURIComponent(query)), display.bind(_this2), pillow.bind(_this2));
+              network.silent(Lampa.Utils.addUrlComponent(url, 'title=' + encodeURIComponent(query)), display.bind(_this2), pillow.bind(_this2));
             }
           }, pillow.bind(_this2));
         };
 
         network.clear();
-        network.timeout(1000 * 15);
+        network.timeout(1000 * 5);
 
         if (object.movie.imdb_id) {
           letgo(object.movie.imdb_id);
         } else if (object.movie.source == 'tmdb' || object.movie.source == 'cub') {
-          network["native"]('http://api.themoviedb.org/3/' + (object.movie.name ? 'tv' : 'movie') + '/' + object.movie.id + '/external_ids?api_key=4ef0d7355d9ffb5151e987764708ce96&language=ru', function (ttid) {
+          network.silent('http://api.themoviedb.org/3/' + (object.movie.name ? 'tv' : 'movie') + '/' + object.movie.id + '/external_ids?api_key=4ef0d7355d9ffb5151e987764708ce96&language=ru', function (ttid) {
             letgo(ttid.imdb_id);
           }, function (a, c) {
             _this2.empty(network.errorDecode(a, c));
@@ -1578,16 +1602,16 @@
       };
 
       this.extendChoice = function () {
-        var data = Lampa.Storage.cache('online_choice_' + balanser, 500, {});
+        var data = Lampa.Storage.cache('streamv1_choice_' + balanser, 500, {});
         var save = data[selected_id || object.movie.id] || {};
         extended = true;
         sources[balanser].extendChoice(save);
       };
 
       this.saveChoice = function (choice) {
-        var data = Lampa.Storage.cache('online_choice_' + balanser, 500, {});
+        var data = Lampa.Storage.cache('streamv1_choice_' + balanser, 500, {});
         data[selected_id || object.movie.id] = choice;
-        Lampa.Storage.set('online_choice_' + balanser, data);
+        Lampa.Storage.set('streamv1_choice_' + balanser, data);
       };
       /**
        * Есть похожие карточки
@@ -1603,7 +1627,7 @@
           elem.title = elem.title || elem.ru_title || elem.nameRu;
           elem.quality = year ? (year + '').slice(0, 4) : '----';
           elem.info = '';
-          var item = Lampa.Template.get('online_folder', elem);
+          var item = Lampa.Template.get('streamv1_folder', elem);
           item.on('hover:enter', function () {
             _this3.activity.loader(true);
 
@@ -1652,7 +1676,7 @@
         var select = [];
 
         var add = function add(type, title) {
-          var need = Lampa.Storage.get('online_filter', '{}');
+          var need = Lampa.Storage.get('streamv1_filter', '{}');
           var items = filter_items[type];
           var subitems = [];
           var value = need[type];
@@ -1677,7 +1701,7 @@
           title: 'Сбросить фильтр',
           reset: true
         });
-        Lampa.Storage.set('online_filter', choice);
+        Lampa.Storage.set('streamv1_filter', choice);
         if (filter_items.voice && filter_items.voice.length) add('voice', 'Перевод');
         if (filter_items.season && filter_items.season.length) add('season', 'Сезон');
         add('source', 'Источник');
@@ -1698,7 +1722,7 @@
 
 
       this.selected = function (filter_items) {
-        var need = Lampa.Storage.get('online_filter', '{}'),
+        var need = Lampa.Storage.get('streamv1_filter', '{}'),
             select = [];
 
         for (var i in need) {
@@ -1874,13 +1898,13 @@
     }
 
     function resetTemplates() {
-      Lampa.Template.add('online', "<div class=\"online selector\">\n        <div class=\"online__body\">\n            <div style=\"position: absolute;left: 0;top: -0.3em;width: 2.4em;height: 2.4em\">\n                <svg style=\"height: 2.4em; width:  2.4em;\" viewBox=\"0 0 128 128\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n                    <circle cx=\"64\" cy=\"64\" r=\"56\" stroke=\"white\" stroke-width=\"16\"/>\n                    <path d=\"M90.5 64.3827L50 87.7654L50 41L90.5 64.3827Z\" fill=\"white\"/>\n                </svg>\n            </div>\n            <div class=\"online__title\" style=\"padding-left: 2.1em;\">{title}</div>\n            <div class=\"online__quality\" style=\"padding-left: 3.4em;\">{quality}{info}</div>\n        </div>\n    </div>");
-      Lampa.Template.add('online_folder', "<div class=\"online selector\">\n        <div class=\"online__body\">\n            <div style=\"position: absolute;left: 0;top: -0.3em;width: 2.4em;height: 2.4em\">\n                <svg style=\"height: 2.4em; width:  2.4em;\" viewBox=\"0 0 128 112\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n                    <rect y=\"20\" width=\"128\" height=\"92\" rx=\"13\" fill=\"white\"/>\n                    <path d=\"M29.9963 8H98.0037C96.0446 3.3021 91.4079 0 86 0H42C36.5921 0 31.9555 3.3021 29.9963 8Z\" fill=\"white\" fill-opacity=\"0.23\"/>\n                    <rect x=\"11\" y=\"8\" width=\"106\" height=\"76\" rx=\"13\" fill=\"white\" fill-opacity=\"0.51\"/>\n                </svg>\n            </div>\n            <div class=\"online__title\" style=\"padding-left: 2.1em;\">{title}</div>\n            <div class=\"online__quality\" style=\"padding-left: 3.4em;\">{quality}{info}</div>\n        </div>\n    </div>");
+      Lampa.Template.add('streamv1', "<div class=\"online selector\">\n        <div class=\"online__body\">\n            <div style=\"position: absolute;left: 0;top: -0.3em;width: 2.4em;height: 2.4em\">\n                <svg style=\"height: 2.4em; width:  2.4em;\" viewBox=\"0 0 128 128\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n                    <circle cx=\"64\" cy=\"64\" r=\"56\" stroke=\"white\" stroke-width=\"16\"/>\n                    <path d=\"M90.5 64.3827L50 87.7654L50 41L90.5 64.3827Z\" fill=\"white\"/>\n                </svg>\n            </div>\n            <div class=\"online__title\" style=\"padding-left: 2.1em;\">{title}</div>\n            <div class=\"online__quality\" style=\"padding-left: 3.4em;\">{quality}{info}</div>\n        </div>\n    </div>");
+      Lampa.Template.add('streamv1_folder', "<div class=\"online selector\">\n        <div class=\"online__body\">\n            <div style=\"position: absolute;left: 0;top: -0.3em;width: 2.4em;height: 2.4em\">\n                <svg style=\"height: 2.4em; width:  2.4em;\" viewBox=\"0 0 128 112\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n                    <rect y=\"20\" width=\"128\" height=\"92\" rx=\"13\" fill=\"white\"/>\n                    <path d=\"M29.9963 8H98.0037C96.0446 3.3021 91.4079 0 86 0H42C36.5921 0 31.9555 3.3021 29.9963 8Z\" fill=\"white\" fill-opacity=\"0.23\"/>\n                    <rect x=\"11\" y=\"8\" width=\"106\" height=\"76\" rx=\"13\" fill=\"white\" fill-opacity=\"0.51\"/>\n                </svg>\n            </div>\n            <div class=\"online__title\" style=\"padding-left: 2.1em;\">{title}</div>\n            <div class=\"online__quality\" style=\"padding-left: 3.4em;\">{quality}{info}</div>\n        </div>\n    </div>");
     }
 
-    var button = "<div class=\"full-start__button selector view--online\" data-subtitle=\"\u041E\u0440\u0438\u0433\u0438\u043D\u0430\u043B \u0441 pastebin v1.45\">\n    <svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:svgjs=\"http://svgjs.com/svgjs\" version=\"1.1\" width=\"512\" height=\"512\" x=\"0\" y=\"0\" viewBox=\"0 0 30.051 30.051\" style=\"enable-background:new 0 0 512 512\" xml:space=\"preserve\" class=\"\">\n    <g xmlns=\"http://www.w3.org/2000/svg\">\n        <path d=\"M19.982,14.438l-6.24-4.536c-0.229-0.166-0.533-0.191-0.784-0.062c-0.253,0.128-0.411,0.388-0.411,0.669v9.069   c0,0.284,0.158,0.543,0.411,0.671c0.107,0.054,0.224,0.081,0.342,0.081c0.154,0,0.31-0.049,0.442-0.146l6.24-4.532   c0.197-0.145,0.312-0.369,0.312-0.607C20.295,14.803,20.177,14.58,19.982,14.438z\" fill=\"currentColor\"/>\n        <path d=\"M15.026,0.002C6.726,0.002,0,6.728,0,15.028c0,8.297,6.726,15.021,15.026,15.021c8.298,0,15.025-6.725,15.025-15.021   C30.052,6.728,23.324,0.002,15.026,0.002z M15.026,27.542c-6.912,0-12.516-5.601-12.516-12.514c0-6.91,5.604-12.518,12.516-12.518   c6.911,0,12.514,5.607,12.514,12.518C27.541,21.941,21.937,27.542,15.026,27.542z\" fill=\"currentColor\"/>\n    </g></svg>\n\n    <span>\u041E\u043D\u043B\u0430\u0439\u043D</span>\n    </div>"; // нужна заглушка, а то при страте лампы говорит пусто
+    var button = "<div class=\"full-start__button selector view--streamv1\" data-subtitle=\"\u041E\u0440\u0438\u0433\u0438\u043D\u0430\u043B \u0441 pastebin v1.45\">\n    <svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:svgjs=\"http://svgjs.com/svgjs\" version=\"1.1\" width=\"512\" height=\"512\" x=\"0\" y=\"0\" viewBox=\"0 0 30.051 30.051\" style=\"enable-background:new 0 0 512 512\" xml:space=\"preserve\" class=\"\">\n    <g xmlns=\"http://www.w3.org/2000/svg\">\n        <path d=\"M19.982,14.438l-6.24-4.536c-0.229-0.166-0.533-0.191-0.784-0.062c-0.253,0.128-0.411,0.388-0.411,0.669v9.069   c0,0.284,0.158,0.543,0.411,0.671c0.107,0.054,0.224,0.081,0.342,0.081c0.154,0,0.31-0.049,0.442-0.146l6.24-4.532   c0.197-0.145,0.312-0.369,0.312-0.607C20.295,14.803,20.177,14.58,19.982,14.438z\" fill=\"currentColor\"/>\n        <path d=\"M15.026,0.002C6.726,0.002,0,6.728,0,15.028c0,8.297,6.726,15.021,15.026,15.021c8.298,0,15.025-6.725,15.025-15.021   C30.052,6.728,23.324,0.002,15.026,0.002z M15.026,27.542c-6.912,0-12.516-5.601-12.516-12.514c0-6.91,5.604-12.518,12.516-12.518   c6.911,0,12.514,5.607,12.514,12.518C27.541,21.941,21.937,27.542,15.026,27.542z\" fill=\"currentColor\"/>\n    </g></svg>\n\n    <span>Смотреть</span>\n    </div>"; // нужна заглушка, а то при страте лампы говорит пусто
 
-    Lampa.Component.add('online', component); //то же самое
+    Lampa.Component.add('streamv1', component); //то же самое
 
     resetTemplates();
     Lampa.Listener.follow('full', function (e) {
@@ -1888,11 +1912,11 @@
         var btn = $(button);
         btn.on('hover:enter', function () {
           resetTemplates();
-          Lampa.Component.add('online', component);
+          Lampa.Component.add('streamv1', component);
           Lampa.Activity.push({
             url: '',
-            title: 'Онлайн',
-            component: 'online',
+            title: 'Смотреть',
+            component: 'streamv1',
             search: e.data.movie.title,
             search_one: e.data.movie.title,
             search_two: e.data.movie.original_title,
