@@ -22,12 +22,12 @@
 
       this.search = function (_object, data) {
         object = _object;
-        var url = 'https://videocdn.tv/api/';
+        var url = 'http://tor.arkmv.ru/vcdn/api/';
         var itm = data[0];
         var type = itm.iframe_src.split('/').slice(-2)[0];
         if (type == 'movie') type = 'movies';
         url += type;
-        url = Lampa.Utils.addUrlComponent(url, 'api_token=3i40G5TSECmLF77oAqnEgbx61ZWaOYaE');
+        url = Lampa.Utils.addUrlComponent(url, 'api_token=W2NvL86a34Kg2oJXMTf8q67gsgkKuzap');
         url = Lampa.Utils.addUrlComponent(url, itm.imdb_id ? 'imdb_id=' + encodeURIComponent(itm.imdb_id) : 'title=' + encodeURIComponent(itm.title));
         url = Lampa.Utils.addUrlComponent(url, 'field=' + encodeURIComponent('global'));
         network["native"](url, function (found) {
@@ -1510,9 +1510,9 @@
       this.find = function () {
         var _this2 = this;
 
-        var url = 'https://videocdn.tv/api/short';
+        var url = 'http://tor.arkmv.ru/vcdn/api/short';
         var query = object.search;
-        url = Lampa.Utils.addUrlComponent(url, 'api_token=3i40G5TSECmLF77oAqnEgbx61ZWaOYaE');
+        url = Lampa.Utils.addUrlComponent(url, 'api_token=W2NvL86a34Kg2oJXMTf8q67gsgkKuzap');
 
         var display = function display(json) {
           if (object.movie.imdb_id) {
